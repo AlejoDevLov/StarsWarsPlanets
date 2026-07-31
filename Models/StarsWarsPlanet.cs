@@ -4,7 +4,7 @@ namespace StarsWarsPlanets.Models;
 
 internal class StarsWarsPlanet
 {
-    public static void Start(List<object> objs)
+    public static void Start()
     {
 
     }

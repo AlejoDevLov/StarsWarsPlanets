@@ -12,13 +12,11 @@ string json = await apiDataReader.Read(apiBaseUrl, apiEndpoint);
 
 List<Planet>? planets = JsonSerializer.Deserialize<List<Planet>>(json);
 
-if(planets is not null)
+IObjectDataPrinter objectPrinter = new ReflectionObjectDataPrinter();
+
+if (planets is not null)
 {
-    foreach(var planet in planets)
-    {
-        Console.WriteLine(planet);
-        ConsoleUI.PrintMessage("hello");
-    }
+    objectPrinter.PrintPlanets(planets);
 }
 
 Console.ReadKey();

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-internal record Planet(
+public record Planet(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("rotation_period")] string RotationPeriod,
     [property: JsonPropertyName("orbital_period")] string OrbitalPeriod,
