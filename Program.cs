@@ -1,4 +1,5 @@
 ﻿using StarsWarsPlanets.API;
+using StarsWarsPlanets.Models;
 using StarsWarsPlanets.UI;
 using System.Text.Json;
 
@@ -12,11 +13,27 @@ string json = await apiDataReader.Read(apiBaseUrl, apiEndpoint);
 
 List<Planet>? planets = JsonSerializer.Deserialize<List<Planet>>(json);
 
-IObjectDataPrinter objectPrinter = new ReflectionObjectDataPrinter();
+var basicPlanetList = CreateBasicPlanets(planets);
 
-if (planets is not null)
+var dataPrinter = new DataPrinter(basicPlanetList);
+
+if (basicPlanetList is not null)
 {
-    objectPrinter.PrintPlanets(planets);
+    dataPrinter.PrintPlanetsUsingReflection();
+}
+
+string usersChoice = dataPrinter.AskUserWhichStatisticWantsToSee();
+dataPrinter.PrintStatisticsForThePropertySelectedByUser(usersChoice);
+
+
+static List<BasicPlanet> CreateBasicPlanets(IEnumerable<Planet> planets)
+{
+    var basicPlanets = new List<BasicPlanet>();
+    foreach (var planet in planets)
+    {
+        basicPlanets.Add(new BasicPlanet(planet.Name, planet.Diameter, planet.SurfaceWater, planet.Population));
+    }
+    return basicPlanets;
 }
 
 Console.ReadKey();
