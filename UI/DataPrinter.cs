@@ -3,16 +3,24 @@ using System.Reflection;
 
 namespace StarsWarsPlanets.UI;
 
+enum BasicPlanetProperties
+{
+    Diameter,
+    Surface,
+    Population
+}
+
+enum FilteringCriteria { Max, Min }
+
 
 // This class represents the object's data in a chart in the console. 
 internal class DataPrinter
 {
     //This field defines the width of the cell that represents each value in the console
     private readonly int _cellLength = 20;
-    private readonly IEnumerable<object> Planets;
-    private readonly string[] _BasicPlanetProperties = ["Diameter", "Surface", "Population"];
+    private readonly IEnumerable<BasicPlanet> Planets;
 
-    internal DataPrinter(IEnumerable<object> planets)
+    internal DataPrinter(IEnumerable<BasicPlanet> planets)
     {
         Planets = planets;
     }
@@ -21,8 +29,8 @@ internal class DataPrinter
     {
         if (Planets.Any())
         {
-            // The code in this loop defines the headers of the chart
             PropertyInfo[] properties = Planets.ElementAt(0).GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            // The code in this loop defines the headers of the chart
             foreach (PropertyInfo property in properties)
             {
                 Console.Write($"{property.Name}" + " ".PadLeft(_cellLength - property.Name.Length) + "|");
@@ -32,9 +40,9 @@ internal class DataPrinter
             Console.WriteLine(new string('-', _cellLength * properties.Length + properties.Length));
 
             // The code in these loops defines the values for the chart
+            PropertyInfo[] props = Planets.ElementAt(0).GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
             foreach (var obj in Planets)
             {
-                PropertyInfo[] props = obj.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
                 foreach (PropertyInfo property in props)
                 {
                     var item = property.GetValue(obj);
@@ -60,7 +68,7 @@ internal class DataPrinter
     {
 
         Console.WriteLine("The statistics of which property would you like to see?");
-        foreach(var basicPlanetProperty in _BasicPlanetProperties)
+        foreach(var basicPlanetProperty in Enum.GetValues<BasicPlanetProperties>())
         {
             Console.WriteLine(basicPlanetProperty);
         }
@@ -68,89 +76,51 @@ internal class DataPrinter
         return Console.ReadLine() ?? "";
     }
 
-    public void PrintStatisticsForThePropertySelectedByUser(string usersChoice)
+    public void PrintStatisticsForThePropertySelectedByUser(string userChoice)
     {
-        usersChoice = usersChoice.ToLower().Trim();
-        bool isAValidChoice = ValidateUsersChoice(usersChoice);
+        try
+        {
+            BasicPlanetProperties planetProperty = ConvertUserChoiceToPlanetProperty(userChoice);
 
-        if (!isAValidChoice)
+            var (planetNameMax, maxValue) = FindPlanetNameAndMaxOrMinValueByProperty(planetProperty, FilteringCriteria.Max);
+            var (planetNameMin, minValue) = FindPlanetNameAndMaxOrMinValueByProperty(planetProperty, FilteringCriteria.Min);
+
+            Console.WriteLine($"The max {planetProperty} is {maxValue} (Planet: {planetNameMax})");
+            Console.WriteLine($"The min {planetProperty} is {minValue} (Planet: {planetNameMin})");
+            Console.WriteLine("Press any key to close");
+        }
+        catch (ArgumentException)
         {
             Console.WriteLine("Invalid choice.");
             Console.WriteLine("Press any key to close");
-            return;
         }
-
-        Tuple<string, string> planetNameAndMaxValue = FindPlanetNameAndMaxValueByProperty(usersChoice, (IEnumerable<BasicPlanet>)Planets);
-        Tuple<string, string> planetNameAndMinValue = FindPlanetNameAndMinValueByProperty(usersChoice, (IEnumerable<BasicPlanet>)Planets);
-        
-        Console.WriteLine($"The max {usersChoice} is {planetNameAndMaxValue.Item2} (Planet: {planetNameAndMaxValue.Item1})");
-        Console.WriteLine($"The min {usersChoice} is {planetNameAndMinValue.Item2} (Planet: {planetNameAndMinValue.Item1 })");
-        Console.WriteLine("Press any key to close");
-        return;
     }
 
-    private bool ValidateUsersChoice(string usersChoice)
+    private BasicPlanetProperties ConvertUserChoiceToPlanetProperty(string userChoice)
     {
-        return _BasicPlanetProperties.Where( property => property.ToLower().Equals(usersChoice) ).Any();
-    }
+        userChoice = userChoice.ToLower().Trim();
+        return userChoice switch
+        {
+            "population" => BasicPlanetProperties.Population,
+            "diameter" => BasicPlanetProperties.Diameter,
+            "surface" => BasicPlanetProperties.Surface,
+            _ => throw new ArgumentException($"The user choice ({userChoice}) is invalid.")
+        };
+    } 
+    private string FindValueForThePlanetProperty(BasicPlanetProperties property, BasicPlanet planet) =>
+         property switch
+        {
+            BasicPlanetProperties.Diameter => planet.Diameter,
+            BasicPlanetProperties.Surface => planet.SurfaceWater,
+            BasicPlanetProperties.Population => planet.Population,
+            _ => throw new InvalidFilterCriteriaException()
+        }; 
 
-    private Tuple<string, string> FindPlanetNameAndMaxValueByProperty(string property, IEnumerable<BasicPlanet> basicPlanets)
+    private (string PlanetName, string PropertyValue) FindPlanetNameAndMaxOrMinValueByProperty(BasicPlanetProperties planetProperty, FilteringCriteria filter)
     {
-#nullable disable
-        // diameter
-        if (property.Equals(_BasicPlanetProperties[0].ToLower()))
-        {
-            var planet = basicPlanets
-                .Where(p => long.TryParse(p.Diameter, out _))
-                .MaxBy(p => long.Parse(p.Diameter));
-            return Tuple.Create(planet.Name, planet.Diameter);
-        }
-        // Surface
-        else if (property.Equals(_BasicPlanetProperties[1].ToLower()))
-        {
-            var planet = basicPlanets
-                .Where(p => long.TryParse(p.SurfaceWater, out _))
-                .MaxBy(p => long.Parse(p.SurfaceWater));
-            return Tuple.Create(planet.Name, planet.SurfaceWater);
-        }
-        // Population
-        else
-        {
-            var planet = basicPlanets
-                .Where(p => long.TryParse(p.Population, out _))
-                .MaxBy(p => long.Parse(p.Population));
-            return Tuple.Create(planet.Name, planet.Population);
-        }
-# nullable enable
-    }
-
-    private Tuple<string, string> FindPlanetNameAndMinValueByProperty(string property, IEnumerable<BasicPlanet> basicPlanets)
-    {
-#nullable disable
-        // diameter
-        if (property.Equals(_BasicPlanetProperties[0].ToLower()))
-        {
-            var planet = basicPlanets
-                .Where(p => long.TryParse(p.Diameter, out _))
-                .MinBy(p => long.Parse(p.Diameter));
-            return Tuple.Create(planet.Name, planet.Diameter);
-        }
-        // Surface
-        else if (property.Equals(_BasicPlanetProperties[1].ToLower()))
-        {
-            var planet = basicPlanets
-                .Where(p => long.TryParse(p.SurfaceWater, out _))
-                .MinBy(p => long.Parse(p.SurfaceWater));
-            return Tuple.Create(planet.Name, planet.SurfaceWater);
-        }
-        // Population
-        else
-        {
-            var planet = basicPlanets
-                .Where(p => long.TryParse(p.Population, out _))
-                .MinBy(p => long.Parse(p.Population));
-            return Tuple.Create(planet.Name, planet.Population);
-        }
-# nullable enable
+        var planets = Planets
+                .Select(p => (PlanetName: p.Name, PropertyValue: FindValueForThePlanetProperty(planetProperty, p)))
+                .Where(p => long.TryParse(p.PropertyValue, out _));
+        return filter == FilteringCriteria.Max ? planets.MaxBy(p => p.PropertyValue) : planets.MinBy(p => p.PropertyValue);
     }
 }
