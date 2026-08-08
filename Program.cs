@@ -1,39 +1,32 @@
-﻿using StarsWarsPlanets.API;
-using StarsWarsPlanets.Models;
-using StarsWarsPlanets.UI;
-using System.Text.Json;
+﻿using StarsWarsPlanets.ConsoleUI;
+using StarsWarsPlanets.Services;
 
 
 var apiBaseUrl = "https://swapi.info/api/";
 var apiEndpoint = "planets";
 
-IAPIDataReader apiDataReader = new APIDataReaderHttpClient();
-
-string json = await apiDataReader.Read(apiBaseUrl, apiEndpoint);
-
-List<Planet>? planets = JsonSerializer.Deserialize<List<Planet>>(json);
-
-var basicPlanetList = CreateBasicPlanets(planets);
-
-var dataPrinter = new DataPrinter(basicPlanetList);
-
-if (basicPlanetList is not null)
+try
 {
-    dataPrinter.PrintPlanetsUsingReflection();
-}
-
-string usersChoice = dataPrinter.AskUserWhichStatisticWantsToSee();
-dataPrinter.PrintStatisticsForThePropertySelectedByUser(usersChoice);
-
-
-static List<BasicPlanet> CreateBasicPlanets(IEnumerable<Planet> planets)
-{
-    var basicPlanets = new List<BasicPlanet>();
-    foreach (var planet in planets)
+    List<Planet> planets = await HttpService.ReadAPI(apiBaseUrl, apiEndpoint);
+    if(planets.Any() && planets is not null)
     {
-        basicPlanets.Add(new BasicPlanet(planet.Name, planet.Diameter, planet.SurfaceWater, planet.Population));
+        var basicPlanetList = ParsePlanetsService.GenerateBasicPlanets(planets);
+        var dataPrinter = new DataPrinter(basicPlanetList);
+
+        if (basicPlanetList is not null)
+        {
+            dataPrinter.PrintPlanetsUsingReflection();
+        }
+
+        string usersChoice = UserInput.AskUserWhichStatisticWantsToSee();
+        dataPrinter.PrintStatisticsForThePropertySelectedByUser(usersChoice);
+    
     }
-    return basicPlanets;
+} 
+catch (Exception ex)
+{
+    Console.WriteLine("An unexpected error ocurred. " + ex.Message + " " + ex.StackTrace);
 }
+
 
 Console.ReadKey();

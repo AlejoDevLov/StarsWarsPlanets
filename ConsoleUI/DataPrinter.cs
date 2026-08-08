@@ -1,16 +1,9 @@
-﻿using StarsWarsPlanets.Models;
+﻿using StarsWarsPlanets.Enums;
+using StarsWarsPlanets.Helpers;
+using StarsWarsPlanets.Models;
 using System.Reflection;
 
-namespace StarsWarsPlanets.UI;
-
-enum BasicPlanetProperties
-{
-    Diameter,
-    Surface,
-    Population
-}
-
-enum FilteringCriteria { Max, Min }
+namespace StarsWarsPlanets.ConsoleUI;
 
 
 // This class represents the object's data in a chart in the console. 
@@ -64,26 +57,14 @@ internal class DataPrinter
         }
     }
 
-    public string AskUserWhichStatisticWantsToSee()
-    {
-
-        Console.WriteLine("The statistics of which property would you like to see?");
-        foreach(var basicPlanetProperty in Enum.GetValues<BasicPlanetProperties>())
-        {
-            Console.WriteLine(basicPlanetProperty);
-        }
-        Console.WriteLine();
-        return Console.ReadLine() ?? "";
-    }
-
     public void PrintStatisticsForThePropertySelectedByUser(string userChoice)
     {
         try
         {
-            BasicPlanetProperties planetProperty = ConvertUserChoiceToPlanetProperty(userChoice);
+            BasicPlanetProperties planetProperty = DataPrinterHelper.ConvertUserChoiceToPlanetProperty(userChoice);
 
-            var (planetNameMax, maxValue) = FindPlanetNameAndMaxOrMinValueByProperty(planetProperty, FilteringCriteria.Max);
-            var (planetNameMin, minValue) = FindPlanetNameAndMaxOrMinValueByProperty(planetProperty, FilteringCriteria.Min);
+            var (planetNameMax, maxValue) = DataPrinterHelper.FindPlanetNameAndMaxOrMinValueByProperty(Planets, planetProperty, FilteringCriteria.Max);
+            var (planetNameMin, minValue) = DataPrinterHelper.FindPlanetNameAndMaxOrMinValueByProperty(Planets, planetProperty, FilteringCriteria.Min);
 
             Console.WriteLine($"The max {planetProperty} is {maxValue} (Planet: {planetNameMax})");
             Console.WriteLine($"The min {planetProperty} is {minValue} (Planet: {planetNameMin})");
@@ -95,32 +76,5 @@ internal class DataPrinter
             Console.WriteLine("Press any key to close");
         }
     }
-
-    private BasicPlanetProperties ConvertUserChoiceToPlanetProperty(string userChoice)
-    {
-        userChoice = userChoice.ToLower().Trim();
-        return userChoice switch
-        {
-            "population" => BasicPlanetProperties.Population,
-            "diameter" => BasicPlanetProperties.Diameter,
-            "surface" => BasicPlanetProperties.Surface,
-            _ => throw new ArgumentException($"The user choice ({userChoice}) is invalid.")
-        };
-    } 
-    private string FindValueForThePlanetProperty(BasicPlanetProperties property, BasicPlanet planet) =>
-         property switch
-        {
-            BasicPlanetProperties.Diameter => planet.Diameter,
-            BasicPlanetProperties.Surface => planet.SurfaceWater,
-            BasicPlanetProperties.Population => planet.Population,
-            _ => throw new InvalidFilterCriteriaException()
-        }; 
-
-    private (string PlanetName, string PropertyValue) FindPlanetNameAndMaxOrMinValueByProperty(BasicPlanetProperties planetProperty, FilteringCriteria filter)
-    {
-        var planets = Planets
-                .Select(p => (PlanetName: p.Name, PropertyValue: FindValueForThePlanetProperty(planetProperty, p)))
-                .Where(p => long.TryParse(p.PropertyValue, out _));
-        return filter == FilteringCriteria.Max ? planets.MaxBy(p => p.PropertyValue) : planets.MinBy(p => p.PropertyValue);
-    }
+ 
 }
