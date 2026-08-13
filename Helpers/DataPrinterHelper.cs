@@ -1,37 +1,24 @@
-﻿using StarsWarsPlanets.Enums;
-using StarsWarsPlanets.Models;
-using System.Reflection;
+﻿using StarsWarsPlanets.Models;
 
 namespace StarsWarsPlanets.Helpers;
 
 internal class DataPrinterHelper
 {
-    public static string FindValueForThePlanetProperty(BasicPlanetProperties property, BasicPlanet planet) =>
-     property switch
-     {
-         BasicPlanetProperties.Diameter => planet.Diameter,
-         BasicPlanetProperties.Surface => planet.SurfaceWater,
-         BasicPlanetProperties.Population => planet.Population,
-         _ => throw new InvalidFilterCriteriaException()
-     };
-
-    public static (string PlanetName, string PropertyValue) FindPlanetNameAndMaxOrMinValueByProperty(IEnumerable<BasicPlanet> planets, BasicPlanetProperties planetProperty, FilteringCriteria filter)
+    public static BasicPlanet FindPlanetNameAndMinValueByProperty(IEnumerable<BasicPlanet> planets, Func<BasicPlanet, string> planetProperty)
     {
-        var filteredPlanets = planets
-                .Select(p => (PlanetName: p.Name, PropertyValue: FindValueForThePlanetProperty(planetProperty, p)))
-                .Where(p => long.TryParse(p.PropertyValue, out _));
-        return filter == FilteringCriteria.Max ? filteredPlanets.MaxBy(p => p.PropertyValue) : filteredPlanets.MinBy(p => p.PropertyValue);
+        var planet = planets
+                .Where(p => long.TryParse(planetProperty(p), out _))
+                .MinBy(planetProperty);
+
+        return planet ??= new BasicPlanet("Fake planet", "0", "0", "0");
     }
 
-    public static BasicPlanetProperties ConvertUserChoiceToPlanetProperty(string userChoice)
+    public static BasicPlanet FindPlanetNameAndMaxValueByProperty(IEnumerable<BasicPlanet> planets, Func<BasicPlanet, string> planetProperty)
     {
-        userChoice = userChoice.ToLower().Trim();
-        return userChoice switch
-        {
-            "population" => BasicPlanetProperties.Population,
-            "diameter" => BasicPlanetProperties.Diameter,
-            "surface" => BasicPlanetProperties.Surface,
-            _ => throw new ArgumentException($"The user choice ({userChoice}) is invalid.")
-        };
+        var planet = planets
+                .Where(p => long.TryParse(planetProperty(p), out _))
+                .MaxBy(planetProperty);
+
+        return planet ??= new BasicPlanet("Fake planet", "0", "0", "0");
     }
 }

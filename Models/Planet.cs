@@ -1,5 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
+namespace StarsWarsPlanets.Models;
+
 public record Planet(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("rotation_period")] string RotationPeriod,
@@ -16,4 +18,3 @@ public record Planet(
     [property: JsonPropertyName("edited")] DateTime Edited,
     [property: JsonPropertyName("url")] string Url
 );
-

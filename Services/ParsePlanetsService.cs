@@ -1,4 +1,8 @@
-﻿
+﻿// This class is no longer in use because its functionality was replaced
+// with the implementation of the overriding of the explicit operator in BasicPlanet class
+// I will keep this class just for reference
+
+
 using StarsWarsPlanets.Models;
 
 namespace StarsWarsPlanets.Services;

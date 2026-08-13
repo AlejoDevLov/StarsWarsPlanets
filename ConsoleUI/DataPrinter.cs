@@ -1,5 +1,4 @@
-﻿using StarsWarsPlanets.Enums;
-using StarsWarsPlanets.Helpers;
+﻿using StarsWarsPlanets.Helpers;
 using StarsWarsPlanets.Models;
 using System.Reflection;
 
@@ -57,17 +56,15 @@ internal class DataPrinter
         }
     }
 
-    public void PrintStatisticsForThePropertySelectedByUser(string userChoice)
+    public void PrintStatisticsForThePropertySelectedByUser(string userChoice, Func<BasicPlanet, string> planetProperty)
     {
         try
         {
-            BasicPlanetProperties planetProperty = DataPrinterHelper.ConvertUserChoiceToPlanetProperty(userChoice);
+            var planetMax = DataPrinterHelper.FindPlanetNameAndMaxValueByProperty(Planets, planetProperty);
+            var planetMin = DataPrinterHelper.FindPlanetNameAndMinValueByProperty(Planets, planetProperty);
 
-            var (planetNameMax, maxValue) = DataPrinterHelper.FindPlanetNameAndMaxOrMinValueByProperty(Planets, planetProperty, FilteringCriteria.Max);
-            var (planetNameMin, minValue) = DataPrinterHelper.FindPlanetNameAndMaxOrMinValueByProperty(Planets, planetProperty, FilteringCriteria.Min);
-
-            Console.WriteLine($"The max {planetProperty} is {maxValue} (Planet: {planetNameMax})");
-            Console.WriteLine($"The min {planetProperty} is {minValue} (Planet: {planetNameMin})");
+            Console.WriteLine($"The max {userChoice} is {planetProperty(planetMax)} (Planet: {planetMax.Name})");
+            Console.WriteLine($"The min {userChoice} is {planetProperty(planetMin)} (Planet: {planetMin.Name})");
             Console.WriteLine("Press any key to close");
         }
         catch (ArgumentException)
