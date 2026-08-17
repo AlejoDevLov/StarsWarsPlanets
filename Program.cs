@@ -14,7 +14,7 @@ try
     {
         IEnumerable<BasicPlanet> basicPlanetList = planets.Select( p => (BasicPlanet)p );
 
-        var dataPrinter = new DataPrinter(basicPlanetList);
+        var dataPrinter = new DataPrinter<BasicPlanet>(basicPlanetList);
 
         if (basicPlanetList is not null)
         {

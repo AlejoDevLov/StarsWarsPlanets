@@ -6,49 +6,49 @@ namespace StarsWarsPlanets.ConsoleUI;
 
 
 // This class represents the object's data in a chart in the console. 
-internal class DataPrinter
+internal class DataPrinter<T>
 {
     //This field defines the width of the cell that represents each value in the console
-    private readonly int _cellLength = 20;
-    private readonly IEnumerable<BasicPlanet> Planets;
+    private const int _columnWidth = 20;
+    private readonly IEnumerable<T> Items;
 
-    internal DataPrinter(IEnumerable<BasicPlanet> planets)
+    internal DataPrinter(IEnumerable<T> items)
     {
-        Planets = planets;
+        Items = items;
     }
 
     public void PrintPlanetsUsingReflection()
     {
-        if (Planets.Any())
+        if (Items.Any())
         {
-            PropertyInfo[] properties = Planets.ElementAt(0).GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo[] properties = Items.ElementAt(0)!.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
             // The code in this loop defines the headers of the chart
             foreach (PropertyInfo property in properties)
             {
-                Console.Write($"{property.Name}" + " ".PadLeft(_cellLength - property.Name.Length) + "|");
+                Console.Write($"{property.Name}" + " ".PadLeft(_columnWidth - property.Name.Length) + "|");
             }
 
             Console.WriteLine();
-            Console.WriteLine(new string('-', _cellLength * properties.Length + properties.Length));
+            Console.WriteLine(new string('-', _columnWidth * properties.Length + properties.Length));
 
             // The code in these loops defines the values for the chart
-            PropertyInfo[] props = Planets.ElementAt(0).GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var obj in Planets)
+            PropertyInfo[] props = Items.ElementAt(0)!.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            foreach (var obj in Items)
             {
                 foreach (PropertyInfo property in props)
                 {
                     var item = property.GetValue(obj);
                     if (item is null)
                     {
-                        Console.WriteLine("Null" + " ".PadLeft(_cellLength - 4));
+                        Console.WriteLine("Null" + " ".PadLeft(_columnWidth - 4));
                     }
-                    else if (item.ToString()!.Length >= _cellLength)
+                    else if (item.ToString()!.Length >= _columnWidth)
                     {
-                        Console.WriteLine(item.ToString()!.Substring(0, _cellLength - 3).Concat("  |"));
+                        Console.WriteLine(item.ToString()!.Substring(0, _columnWidth - 3).Concat("  |"));
                     }
                     else
                     {
-                        Console.Write($"{item + " ".PadLeft(_cellLength - item!.ToString()!.Length) + "|"}");
+                        Console.Write($"{item + " ".PadLeft(_columnWidth - item!.ToString()!.Length) + "|"}");
                     }
                 }
                 Console.WriteLine();
@@ -60,8 +60,8 @@ internal class DataPrinter
     {
         try
         {
-            var planetMax = DataPrinterHelper.FindPlanetNameAndMaxValueByProperty(Planets, planetProperty);
-            var planetMin = DataPrinterHelper.FindPlanetNameAndMinValueByProperty(Planets, planetProperty);
+            var planetMax = DataPrinterHelper<BasicPlanet>.FindPlanetNameAndMaxValueByProperty((IEnumerable<BasicPlanet>)Items, planetProperty);
+            var planetMin = DataPrinterHelper<BasicPlanet>.FindPlanetNameAndMinValueByProperty((IEnumerable<BasicPlanet>)Items, planetProperty);
 
             Console.WriteLine($"The max {userChoice} is {planetProperty(planetMax)} (Planet: {planetMax.Name})");
             Console.WriteLine($"The min {userChoice} is {planetProperty(planetMin)} (Planet: {planetMin.Name})");
